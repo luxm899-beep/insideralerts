@@ -1,64 +1,22 @@
 name: Insider & Congress Alerts
-
 on:
   schedule:
     - cron: "*/30 * * * 1-5"
   workflow_dispatch: {}
-
 permissions:
   contents: write
-
 concurrency:
   group: alerts
   cancel-in-progress: false
-
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - run: pip install requests
-
-      - name: Run monitor
-        env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-          MIN_PURCHASE_USD: "100000"
-          INCLUDE_DIRECTORS: "false"
-          SEC_PAGES: "3"
-        run: python monitor.py
-
-           name: Insider & Congress Alerts
-
-on:
-  schedule:
-    - cron: "*/30 * * * 1-5"
-  workflow_dispatch: {}
-
-permissions:
-  contents: write
-
-concurrency:
-  group: alerts
-  cancel-in-progress: false
-
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-
       - run: pip install requests
-
       - name: Run monitor
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
@@ -67,25 +25,5 @@ jobs:
           INCLUDE_DIRECTORS: "false"
           SEC_PAGES: "3"
         run: python monitor.py
-
       - name: Save state
-        run: |
-          git config user.name "alerts-bot"
-          git config user.email "actions@users.noreply.github.com"
-          for attempt in 1 2 3; do
-            git fetch origin main
-            git show origin/main:seen.json > remote.json 2>/dev/null || echo '{}' > remote.json
-            python merge_state.py
-            rm -f remote.json
-            git reset origin/main
-            git add seen.json
-            if git diff --staged --quiet; then echo "nothing new"; exit 0; fi
-            git commit -m "state $(date -u +%FT%TZ)"
-            if git push origin HEAD:main; then exit 0; fi
-            echo "push raced, retrying"
-            sleep 5
-          done
-          echo "could not save state, will retry next run"
-            sleep 5
-          done
-          echo "could not save state, will retry next run"
+        run: bash save_state.sh
