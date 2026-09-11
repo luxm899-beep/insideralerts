@@ -25,5 +25,5 @@ jobs:
           INCLUDE_DIRECTORS: "false"
           SEC_PAGES: "3"
         run: python monitor.py
-      - name: Save state
+     - name: Save state
         run: bash save_state.sh
